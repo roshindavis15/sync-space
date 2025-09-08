@@ -28,6 +28,8 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
 
+  debug: true, // <-- Enable debug mode
+
   callbacks: {
     async jwt({ token, user }): Promise<JWT> {
       if (user) {
