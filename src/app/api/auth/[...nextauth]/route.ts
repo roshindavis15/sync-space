@@ -3,6 +3,8 @@ import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
 import clientPromise from "@/lib/mongodb";
+import type { JWT } from "next-auth/jwt";
+import type { Session, User } from "next-auth";
 
 export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(clientPromise),
@@ -11,7 +13,6 @@ export const authOptions: NextAuthOptions = {
     GithubProvider({
       clientId: process.env.GITHUB_ID!,
       clientSecret: process.env.GITHUB_SECRET!,
-      // Always show GitHub login screen
       authorization: { params: { prompt: "login" } },
     }),
     GoogleProvider({
@@ -24,21 +25,27 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   session: {
-    strategy: "jwt", // better for Next.js App Router
+    strategy: "jwt",
   },
 
   callbacks: {
-    async jwt({ token, account, user }) {
-      // On first login, attach user.id from DB
+    async jwt({ token, user }): Promise<JWT> {
       if (user) {
-        token.userId = (user as any).id;
+        // Extend token with user id
+        token.userId = (user as User).id;
       }
       return token;
     },
-    async session({ session, token }) {
-      // Make user.id available on the client
-      if (token?.userId) {
-        (session.user as any).id = token.userId as string;
+    async session({ session, token }): Promise<Session> {
+      if (token?.userId && session.user) {
+        // Safely extend session
+        return {
+          ...session,
+          user: {
+            ...session.user,
+            id: token.userId as string,
+          },
+        };
       }
       return session;
     },

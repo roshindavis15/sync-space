@@ -17,11 +17,9 @@ import {
   MoreHorizontal,
   Edit3,
   Share2,
-  Trash2,
   ChevronDown,
   User,
   Home,
-  Folder,
   Archive
 } from 'lucide-react';
 
@@ -113,7 +111,8 @@ export default function Dashboard() {
                   type="text"
                   placeholder="Search documents..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+
                   className="pl-10 pr-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
                 />
               </div>

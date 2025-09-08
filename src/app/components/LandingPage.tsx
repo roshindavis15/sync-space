@@ -14,6 +14,9 @@ const SyncSpaceLanding: React.FC = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  // ✅ extract dependency for cleaner useEffect deps
+  const statsVisible = isVisible["stats"];
+
   const handleGetStarted = () => {
     if (session) {
       router.push('/dashboard');
@@ -113,7 +116,7 @@ const SyncSpaceLanding: React.FC = () => {
     const [count, setCount] = useState<number>(0);
     
     useEffect(() => {
-      if (!isVisible['stats']) return;
+      if (!statsVisible) return;
       
       let start = 0;
       const increment = end / (duration / 16);
@@ -128,7 +131,7 @@ const SyncSpaceLanding: React.FC = () => {
       }, 16);
       
       return () => clearInterval(timer);
-    }, [end, duration, isVisible]);
+    }, [end, duration, statsVisible]); // ✅ fixed dependency
     
     return <span>{count.toLocaleString()}</span>;
   };
@@ -360,7 +363,7 @@ const SyncSpaceLanding: React.FC = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-black/20 backdrop-blur-sm">
+ <section className="py-20 px-4 sm:px-6 lg:px-8 bg-black/20 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto">
           <div className={`text-center mb-16 transition-all duration-1000 ${isVisible['testimonials'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} id="testimonials">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
@@ -380,8 +383,9 @@ const SyncSpaceLanding: React.FC = () => {
                     <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
                   ))}
                 </div>
+                {/* ✅ escaped quotes */}
                 <p className="text-gray-300 mb-6 leading-relaxed">
-                  "{testimonial.content}"
+                  &quot;{testimonial.content}&quot;
                 </p>
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
