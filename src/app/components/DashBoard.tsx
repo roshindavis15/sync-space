@@ -1,191 +1,158 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import React, { useState } from 'react';
 import { 
+  FileText, 
   Plus, 
   Search, 
-  Filter, 
-  MoreHorizontal, 
-  FileText, 
+  Bell, 
+  Settings, 
+  LogOut, 
   Users, 
   Clock, 
-  Star,
-  Folder,
-  Grid3X3,
-  List,
+  Star, 
+  Filter,
+  MoreHorizontal,
+  Edit3,
+  Share2,
+  Trash2,
   ChevronDown,
-  Settings,
-  Bell,
-  User
+  User,
+  Home,
+  Folder,
+  Archive
 } from 'lucide-react';
 
-interface Document {
+interface Note {
   id: string;
   title: string;
-  type: 'document' | 'database' | 'page';
-  lastModified: string;
+  preview: string;
+  lastEdited: string;
   collaborators: string[];
   isStarred: boolean;
-  preview: string;
 }
 
-interface Workspace {
-  id: string;
-  name: string;
-  documents: Document[];
-  members: number;
-}
-
-const Dashboard: React.FC = () => {
-  const { data: session, status } = useSession();
+export default function Dashboard() {
   const router = useRouter();
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedWorkspace, setSelectedWorkspace] = useState<string>('personal');
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const { data: session } = useSession();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("all");
 
-  // Mock data - replace with actual API calls
-  const [workspaces] = useState<Workspace[]>([
+  // Mock data - replace with real data from your backend
+  const mockNotes: Note[] = [
     {
-      id: 'personal',
-      name: 'Personal Workspace',
-      members: 1,
-      documents: [
-        {
-          id: '1',
-          title: 'Project Planning',
-          type: 'document',
-          lastModified: '2 hours ago',
-          collaborators: ['user1'],
-          isStarred: true,
-          preview: 'Planning document for the new feature release...'
-        },
-        {
-          id: '2',
-          title: 'Meeting Notes',
-          type: 'document',
-          lastModified: '1 day ago',
-          collaborators: ['user1', 'user2'],
-          isStarred: false,
-          preview: 'Notes from the weekly team sync meeting...'
-        },
-        {
-          id: '3',
-          title: 'Task Database',
-          type: 'database',
-          lastModified: '3 days ago',
-          collaborators: ['user1', 'user2', 'user3'],
-          isStarred: true,
-          preview: 'Kanban board for tracking project tasks...'
-        }
-      ]
+      id: "1",
+      title: "Project Roadmap Q1 2024",
+      preview: "Planning and timeline for the first quarter including feature releases...",
+      lastEdited: "2 hours ago",
+      collaborators: ["A", "B"],
+      isStarred: true
+    },
+    {
+      id: "2", 
+      title: "Team Meeting Notes",
+      preview: "Weekly standup notes and action items for the development team...",
+      lastEdited: "1 day ago",
+      collaborators: ["C", "D", "E"],
+      isStarred: false
+    },
+    {
+      id: "3",
+      title: "Design System Guidelines",
+      preview: "Comprehensive guide for our design system components and usage...",
+      lastEdited: "3 days ago",
+      collaborators: ["B"],
+      isStarred: true
     }
-  ]);
+  ];
 
-  const currentWorkspace = workspaces.find(w => w.id === selectedWorkspace);
-  
-  const filteredDocuments = currentWorkspace?.documents.filter(doc =>
-    doc.title.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
-
-  const handleCreateDocument = () => {
-    // Navigate to new document editor
-    router.push('/document/new');
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
+    router.push("/");
   };
 
-  const handleOpenDocument = (docId: string) => {
-    router.push(`/document/${docId}`);
+  const handleCreateNew = () => {
+    // Navigate to new document or open modal
+    console.log("Create new document");
   };
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (!session) {
-    router.push('/');
-    return null;
-  }
+  const filteredNotes = mockNotes.filter(note => {
+    const matchesSearch = note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         note.preview.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (activeFilter === "starred") return matchesSearch && note.isStarred;
+    if (activeFilter === "shared") return matchesSearch && note.collaborators.length > 1;
+    return matchesSearch;
+  });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Left side */}
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">S</span>
-                </div>
-                <h1 className="text-xl font-bold text-gray-900">SyncSpace</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Navigation Header */}
+      <nav className="bg-black/20 backdrop-blur-xl border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            {/* Logo */}
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-lg">S</span>
               </div>
-              
-              <div className="hidden md:flex items-center space-x-1">
-                <div className="flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg">
-                  <Folder className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">{currentWorkspace?.name}</span>
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
-                </div>
-              </div>
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                SyncSpace
+              </span>
             </div>
 
-            {/* Right side */}
-            <div className="flex items-center space-x-3">
-              <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
-                <Bell className="w-5 h-5" />
+            {/* Right side - Search, Notifications, Profile */}
+            <div className="flex items-center space-x-4">
+              {/* Search */}
+              <div className="relative hidden md:block">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search documents..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+                />
+              </div>
+
+              {/* Notifications */}
+              <button className="p-2 text-gray-300 hover:text-white transition-colors relative">
+                <Bell className="w-6 h-6" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
               </button>
-              <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
-                <Settings className="w-5 h-5" />
-              </button>
-              
-              {/* User Menu */}
+
+              {/* Profile Dropdown */}
               <div className="relative">
                 <button 
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-lg"
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center space-x-2 p-2 text-gray-300 hover:text-white transition-colors"
                 >
-                  {session.user?.image ? (
-                    <img 
-                      src={session.user.image} 
-                      alt="Avatar" 
-                      className="w-8 h-8 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-gray-600" />
-                    </div>
-                  )}
-                  <span className="text-sm text-gray-700 hidden md:block">
-                    {session.user?.name}
-                  </span>
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  <ChevronDown className="w-4 h-4" />
                 </button>
 
-                {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
-                    <div className="p-3 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900">{session.user?.name}</p>
-                      <p className="text-sm text-gray-500">{session.user?.email}</p>
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-gray-900 backdrop-blur-xl border border-white/10 rounded-lg shadow-xl z-50">
+                    <div className="p-3 border-b border-white/10">
+                      <div className="text-white font-medium">{session?.user?.name || "User"}</div>
+                      <div className="text-gray-400 text-sm">{session?.user?.email}</div>
                     </div>
                     <div className="p-1">
-                      <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">
-                        Profile Settings
+                      <button className="w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-white/10 rounded flex items-center space-x-2">
+                        <Settings className="w-4 h-4" />
+                        <span>Settings</span>
                       </button>
-                      <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">
-                        Workspace Settings
-                      </button>
-                      <hr className="my-1" />
                       <button 
-                        onClick={() => signOut()}
-                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded"
+                        onClick={handleLogout}
+                        className="w-full text-left px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded flex items-center space-x-2"
                       >
-                        Sign Out
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign Out</span>
                       </button>
                     </div>
                   </div>
@@ -194,192 +161,211 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-      </header>
+      </nav>
 
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-200 min-h-screen">
-          <div className="p-4 space-y-4">
-            {/* Create New Button */}
-            <button 
-              onClick={handleCreateDocument}
-              className="w-full flex items-center space-x-2 px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="font-medium">New Document</span>
-            </button>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar */}
+          <div className="lg:w-64 flex-shrink-0">
+            <div className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+              <nav className="space-y-2">
+                <a href="#" className="flex items-center space-x-3 px-3 py-2 bg-blue-500/20 text-blue-400 rounded-lg">
+                  <Home className="w-5 h-5" />
+                  <span>Dashboard</span>
+                </a>
+                <a href="#" className="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                  <FileText className="w-5 h-5" />
+                  <span>All Documents</span>
+                </a>
+                <a href="#" className="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                  <Star className="w-5 h-5" />
+                  <span>Starred</span>
+                </a>
+                <a href="#" className="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                  <Users className="w-5 h-5" />
+                  <span>Shared</span>
+                </a>
+                <a href="#" className="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                  <Archive className="w-5 h-5" />
+                  <span>Archive</span>
+                </a>
+              </nav>
 
-            {/* Navigation */}
-            <nav className="space-y-1">
-              <a href="#" className="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-                <FileText className="w-5 h-5" />
-                <span>All Documents</span>
-              </a>
-              <a href="#" className="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-                <Star className="w-5 h-5" />
-                <span>Starred</span>
-              </a>
-              <a href="#" className="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-                <Clock className="w-5 h-5" />
-                <span>Recent</span>
-              </a>
-              <a href="#" className="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-                <Users className="w-5 h-5" />
-                <span>Shared with me</span>
-              </a>
-            </nav>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          {/* Search and Actions */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">Documents</h2>
-              
-              <div className="flex items-center space-x-3">
-                {/* View Mode Toggle */}
-                <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                  <button 
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded ${viewMode === 'grid' ? 'bg-white shadow' : ''}`}
-                  >
-                    <Grid3X3 className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 rounded ${viewMode === 'list' ? 'bg-white shadow' : ''}`}
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
+              <div className="mt-8 pt-6 border-t border-white/10">
+                <div className="text-gray-400 text-sm font-medium mb-3">Storage</div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Used</span>
+                    <span className="text-white">2.1 GB of 15 GB</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full" style={{width: '14%'}}></div>
+                  </div>
                 </div>
+              </div>
+            </div>
+          </div>
 
-                <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+              <div>
+                <h1 className="text-3xl font-bold text-white mb-2">Welcome back, {session?.user?.name?.split(' ')[0] || 'User'}!</h1>
+                <p className="text-gray-300">Continue where you left off or start something new.</p>
+              </div>
+              <button 
+                onClick={handleCreateNew}
+                className="mt-4 sm:mt-0 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-105 flex items-center"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                New Document
+              </button>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Total Documents</p>
+                    <p className="text-2xl font-bold text-white">{mockNotes.length}</p>
+                  </div>
+                  <FileText className="w-8 h-8 text-blue-400" />
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Collaborators</p>
+                    <p className="text-2xl font-bold text-white">12</p>
+                  </div>
+                  <Users className="w-8 h-8 text-purple-400" />
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Recent Activity</p>
+                    <p className="text-2xl font-bold text-white">8</p>
+                  </div>
+                  <Clock className="w-8 h-8 text-green-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Documents Section */}
+            <div className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+              {/* Filter Tabs */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <div className="flex space-x-1 mb-4 sm:mb-0">
+                  {[
+                    { key: 'all', label: 'All Documents' },
+                    { key: 'starred', label: 'Starred' },
+                    { key: 'shared', label: 'Shared' }
+                  ].map((filter) => (
+                    <button
+                      key={filter.key}
+                      onClick={() => setActiveFilter(filter.key)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        activeFilter === filter.key
+                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                          : 'text-gray-400 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+                
+                <button className="flex items-center space-x-2 px-4 py-2 text-gray-400 hover:text-white transition-colors">
                   <Filter className="w-4 h-4" />
                   <span>Filter</span>
                 </button>
               </div>
-            </div>
 
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search documents..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
+              {/* Mobile Search */}
+              <div className="md:hidden mb-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search documents..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
 
-          {/* Documents Grid/List */}
-          {filteredDocuments.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
-              <p className="text-gray-500 mb-4">
-                {searchQuery ? 'Try adjusting your search terms' : 'Get started by creating your first document'}
-              </p>
-              {!searchQuery && (
-                <button 
-                  onClick={handleCreateDocument}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                >
-                  Create Document
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
-              {filteredDocuments.map((doc) => (
-                <div 
-                  key={doc.id}
-                  onClick={() => handleOpenDocument(doc.id)}
-                  className={`bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow cursor-pointer ${
-                    viewMode === 'grid' ? 'p-6' : 'p-4 flex items-center space-x-4'
-                  }`}
-                >
-                  {viewMode === 'grid' ? (
-                    <>
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-2">
-                          <FileText className="w-5 h-5 text-blue-500" />
-                          <span className="text-xs text-gray-500 uppercase tracking-wider">
-                            {doc.type}
-                          </span>
+              {/* Documents List */}
+              <div className="space-y-4">
+                {filteredNotes.length > 0 ? (
+                  filteredNotes.map((note) => (
+                    <div key={note.id} className="bg-gradient-to-br from-white/5 to-white/2 backdrop-blur-sm border border-white/5 rounded-xl p-6 hover:border-white/20 transition-all cursor-pointer group">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h3 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors">
+                              {note.title}
+                            </h3>
+                            {note.isStarred && <Star className="w-4 h-4 text-yellow-400 fill-current" />}
+                          </div>
+                          <p className="text-gray-400 mb-3 line-clamp-2">{note.preview}</p>
+                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                            <div className="flex items-center space-x-1">
+                              <Clock className="w-4 h-4" />
+                              <span>Edited {note.lastEdited}</span>
+                            </div>
+                            {note.collaborators.length > 0 && (
+                              <div className="flex items-center space-x-1">
+                                <Users className="w-4 h-4" />
+                                <div className="flex -space-x-1">
+                                  {note.collaborators.map((collaborator, idx) => (
+                                    <div key={idx} className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full border-2 border-gray-900 flex items-center justify-center text-xs font-semibold">
+                                      {collaborator}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          {doc.isStarred && <Star className="w-4 h-4 text-yellow-500 fill-current" />}
-                          <button className="text-gray-400 hover:text-gray-600">
+                        <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                          <button className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
                             <MoreHorizontal className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
-                      
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{doc.title}</h3>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">{doc.preview}</p>
-                      
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <span>{doc.lastModified}</span>
-                        <div className="flex -space-x-1">
-                          {doc.collaborators.slice(0, 3).map((collaborator, index) => (
-                            <div key={index} className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center text-xs font-semibold text-white">
-                              {collaborator.slice(0, 1).toUpperCase()}
-                            </div>
-                          ))}
-                          {doc.collaborators.length > 3 && (
-                            <div className="w-6 h-6 bg-gray-300 rounded-full border-2 border-white flex items-center justify-center text-xs font-semibold text-gray-600">
-                              +{doc.collaborators.length - 3}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center space-x-3 flex-1">
-                        <FileText className="w-5 h-5 text-blue-500" />
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 truncate">{doc.title}</h3>
-                          <p className="text-sm text-gray-500 truncate">{doc.preview}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>{doc.lastModified}</span>
-                        <div className="flex -space-x-1">
-                          {doc.collaborators.slice(0, 3).map((collaborator, index) => (
-                            <div key={index} className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center text-xs font-semibold text-white">
-                              {collaborator.slice(0, 1).toUpperCase()}
-                            </div>
-                          ))}
-                        </div>
-                        {doc.isStarred && <Star className="w-4 h-4 text-yellow-500 fill-current" />}
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <FileText className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-400 mb-2">No documents found</h3>
+                    <p className="text-gray-500 mb-6">
+                      {searchQuery ? "Try adjusting your search terms" : "Create your first document to get started"}
+                    </p>
+                    <button 
+                      onClick={handleCreateNew}
+                      className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-105 flex items-center mx-auto"
+                    >
+                      <Plus className="w-5 h-5 mr-2" />
+                      Create New Document
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </main>
+          </div>
+        </div>
       </div>
-
-      {/* Click outside to close user menu */}
-      {showUserMenu && (
-        <div 
-          className="fixed inset-0 z-10" 
-          onClick={() => setShowUserMenu(false)}
-        />
-      )}
     </div>
   );
-};
-
-export default Dashboard;
+}
