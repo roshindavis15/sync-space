@@ -17,13 +17,27 @@ const SyncSpaceLanding: React.FC = () => {
   // ✅ extract dependency for cleaner useEffect deps
   const statsVisible = isVisible["stats"];
 
-  const handleGetStarted = () => {
-    if (session) {
-      router.push('/dashboard');
-    } else {
-      signIn('github');
+const handleGetStarted = async () => {
+  if (session) {
+    router.push('/dashboard');
+  } else {
+    try {
+      // signIn returns a Promise with info about the redirect
+      const result = await signIn('github', { redirect: false });
+      if (result?.error) {
+        console.error('NextAuth signIn error:', result.error);
+        alert(`Login failed: ${result.error}`);
+      } else if (result?.ok) {
+        // manually redirect after successful login
+        router.push(result.url || '/dashboard');
+      }
+    } catch (err) {
+      console.error('Unexpected error during GitHub sign-in:', err);
+      alert('Something went wrong. Check the console for details.');
     }
-  };
+  }
+};
+
 
   // Intersection Observer for animations
   useEffect(() => {
