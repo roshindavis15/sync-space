@@ -76,7 +76,7 @@ export default function Dashboard() {
 
   const handleCreateNew = () => {
     // Navigate to new document or open modal
-    console.log("Create new document");
+   router.push('/document/new');
   };
 
   const filteredNotes = mockNotes.filter(note => {
